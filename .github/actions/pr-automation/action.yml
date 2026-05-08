@@ -1,0 +1,32 @@
+name: PR Lifecycle Automation
+description: Automate GitHub PR creation, CI checks, and merge using proven agent workflows
+author: alaamohanad169
+inputs:
+  token:
+    description: GitHub token
+    required: true
+  title:
+    description: PR title
+    required: true
+  body:
+    description: PR body
+    required: false
+  base:
+    description: Base branch
+    default: main
+runs:
+  using: composite
+  steps:
+    - name: Create PR
+      uses: actions/github-script@v6
+      with:
+        github-token: ${{ inputs.token }}
+        script: |
+          await github.rest.pulls.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: ${{ inputs.title }},
+            body: ${{ inputs.body }},
+            head: process.env.GITHUB_REF_NAME,
+            base: ${{ inputs.base }}
+          })
