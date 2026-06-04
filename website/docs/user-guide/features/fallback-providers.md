@@ -410,4 +410,4 @@ See [Scheduled Tasks (Cron)](/user-guide/features/cron) for full configuration d
 | Title generation | Layered (see above) | `auxiliary.title_generation` |
 | Triage specifier | Layered (see above) | `auxiliary.triage_specifier` |
 | Delegation | Provider override only (no automatic fallback) | `delegation.provider` / `delegation.model` |
-| Cron jobs | Per-job provider override only (no automatic fallback) | Per-job `provider` / `model` |
+| Cron jobs | ✔ (cron agents inherit configured fallback providers) | Per-job `provider` / `model` overrides |
