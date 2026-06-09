@@ -1034,6 +1034,14 @@ def _run_job_script(script_path: str) -> tuple[bool, str]:
 
     run_env = os.environ.copy()
     run_env["HERMES_HOME"] = str(_get_hermes_home())
+    # Ensure TMPDIR is set for subprocesses (especially on Termux/Android
+    # where /tmp/ is kernel-owned and unwritable). Explicit is better than
+    # implicit — os.environ.copy() inherits it today, but this guarantee
+    # is robust against future env-loading-order changes.
+    if "TMPDIR" in run_env and run_env["TMPDIR"]:
+        pass  # already inherited
+    elif hermes_tmpdir := os.environ.get("TMPDIR"):
+        run_env["TMPDIR"] = hermes_tmpdir
     try:
         from hermes_constants import get_subprocess_home
 
