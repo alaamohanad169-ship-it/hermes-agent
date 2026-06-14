@@ -8822,7 +8822,7 @@ def _(rid, params: dict) -> dict:
             skill_bundles_provider=lambda: get_skill_bundles(),
         )
         doc = Document(text, len(text))
-        items = [
+        raw_items = [
             {
                 "text": c.text,
                 # prompt_toolkit gives us FormattedText (a list of (style,
@@ -8834,7 +8834,22 @@ def _(rid, params: dict) -> dict:
                 "meta": to_plain_text(c.display_meta) if c.display_meta else "",
             }
             for c in completer.get_completions(doc, None)
-        ][:30]
+        ]
+        # Sort: CLI commands first, then skill commands. The TUI's completion
+        # window is 16 items with scroll, so we want all 200+ commands available
+        # for navigation — no cap. Get skill names for sort priority.
+        _skill_names = set()
+        for _s in get_skill_commands():
+            _skill_names.add(_s.lstrip("/"))  # //plan → plan
+        _all_bundle_names = set()
+        for _b in get_skill_bundles().values():
+            _all_bundle_names.update(_b)
+        items = sorted(raw_items, key=lambda x: (
+            1 if x["text"].lstrip("/") in _skill_names else
+            1 if x["text"].lstrip("/") in _all_bundle_names else
+            0,
+            x["text"],
+        ))
         text_lower = text.lower()
         extras = [
             {
