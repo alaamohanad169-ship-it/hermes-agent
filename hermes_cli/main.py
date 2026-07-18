@@ -331,13 +331,22 @@ sys.path.insert(0, str(PROJECT_ROOT))
 # Profile override — MUST happen before any hermes module import.
 #
 # Many modules cache HERMES_HOME at import time (module-level constants).
-# We intercept --profile/-p from sys.argv here and set the env var so that
-# every subsequent ``os.getenv("HERMES_HOME", ...)`` resolves correctly.
-# The flag is stripped from sys.argv so argparse never sees it.
-# Falls back to ~/.hermes/active_profile for sticky default.
+# ---------------------------------------------------------------------------
+# _apply_profile_override  —  pre-parse --profile/-p and set HERMES_HOME
+# before imports. Must be idempotent per-process to survive python -m double-
+# execution (first as __main__, then again on import). A PID-scoped sentinel
+# ensures we only apply the override once per process; children get their own
+# PID and will re-evaluate fresh.
 # ---------------------------------------------------------------------------
 def _apply_profile_override() -> None:
     """Pre-parse --profile/-p and set HERMES_HOME before imports."""
+    # Idempotency guard: prevent double-execution when module runs as __main__
+    # and is then imported. Each process gets its own PID so children re-run.
+    _sentinel = f"_HERMES_PROFILE_OVERRIDE_APPLIED_{os.getpid()}"
+    if _sentinel in os.environ:
+        return
+    os.environ[_sentinel] = "1"
+
     argv = sys.argv[1:]
     profile_name = None
     consume = 0
